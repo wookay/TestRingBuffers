@@ -53,9 +53,12 @@ const verbose = true #"--verbose" in ARGS
 #Compat.@info :dl_path dl_path
 
 const prefix = Prefix(joinpath(@__DIR__, "usr"))
-product = LibraryProduct(prefix, "pa_ringbuffer", :libpa_ringbuffer)
 
-BinaryProvider.libdir(::Nothing, ::Platform) = joinpath(prefix.path, "lib")
+@static if Compat.Sys.iswindows()
+    BinaryProvider.libdir(::Nothing, ::Platform) = joinpath(prefix.path, "lib")
+end
+
+product = LibraryProduct(prefix, "pa_ringbuffer", :libpa_ringbuffer)
 
 #`@static if Compat.Sys.iswindows()
 #`    product = FileProduct(joinpath(prefix, "lib"), :libpa_ringbuffer)
@@ -79,11 +82,11 @@ BinaryProvider.libdir(::Nothing, ::Platform) = joinpath(prefix.path, "lib")
 #else
 #    satisfied(product; verbose=verbose) && write_deps_file(joinpath(@__DIR__, "deps.jl"), [product])
 #end
-#println(read(joinpath(@__DIR__, "deps.jl"), String))
 
 #println(:libnames, ' ', product.libnames, ' ', product.dir_path)
-#println(:sat, ' ', satisfied(product; verbose=true))
-#
-#println(:locate, ' ', locate(product; verbose=true))
+println(:sat, ' ', satisfied(product; verbose=true))
+println(:locate, ' ', locate(product; verbose=true))
 
 satisfied(product; verbose=verbose) && write_deps_file(joinpath(@__DIR__, "deps.jl"), [product])
+
+println(read(joinpath(@__DIR__, "deps.jl"), String))
