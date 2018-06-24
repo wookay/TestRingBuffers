@@ -55,10 +55,21 @@ const verbose = true #"--verbose" in ARGS
 const prefix = Prefix(joinpath(@__DIR__, "usr"))
 
 @static if Compat.Sys.iswindows()
-    BinaryProvider.libdir(::Nothing, ::Platform) = joinpath(prefix.path, "lib")
+    libdir = joinpath(prefix.path, "lib")
+    libsuffix = ""
+    if Sys.ARCH == :x86_64
+        libsuffix = "x86_64-w64-mingw32"
+    elseif Compat.Sys.iswindows() && Sys.ARCH == :i686
+        libsuffix = "i686-w64-mingw32"
+    end
+    libpa_ringbuffer = Compat.Libdl.find_library(
+            ["pa_ringbuffer", "pa_ringbuffer_$libsuffix"],
+            [libdir])
+    libpa_ringbuffer == "" && error("Could not load pa_ringbuffer library, please file an issue at https://github.com/JuliaAudio/RingBuffers.jl/issues with your `versioninfo()` output")
+    product = FileProduct(libpa_ringbuffer, :libpa_ringbuffer)
+else
+    product = LibraryProduct(prefix, "pa_ringbuffer", :libpa_ringbuffer)
 end
-
-product = LibraryProduct(prefix, "pa_ringbuffer", :libpa_ringbuffer)
 
 #`@static if Compat.Sys.iswindows()
 #`    product = FileProduct(joinpath(prefix, "lib"), :libpa_ringbuffer)
